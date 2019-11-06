@@ -7,12 +7,15 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.codec.serialization.ObjectDecoderInputStream;
+import io.netty.handler.codec.serialization.ObjectEncoderOutputStream;
 import io.netty.util.CharsetUtil;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.concurrent.Task;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
@@ -20,8 +23,10 @@ import javafx.scene.layout.HBox;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
@@ -29,11 +34,7 @@ import java.nio.file.StandardOpenOption;
 public class ClientController {
     private Logger logger = LoggerFactory.getLogger(Client.class );
 
-    @FXML
-    TextField tfSend;
 
-    @FXML
-    TextField tfReceive;
 
     @FXML
     TextField tfHost;
@@ -45,10 +46,13 @@ public class ClientController {
     Button btnConnect;
 
     @FXML
-    Button btnSend;
+    Button btnDisconnect;
 
     @FXML
-    Button btnDisconnect;
+    Button toServer;
+
+    @FXML
+    Button toClient;
 
     @FXML
     HBox hboxStatus;
@@ -60,7 +64,10 @@ public class ClientController {
     Label lblStatus;
 
     @FXML
-    ListView<String> filesList;
+    ListView<String> filesClientsList;
+
+    @FXML
+    ListView<String> filesServerList;
 
     private BooleanProperty connected = new SimpleBooleanProperty(false);
     private StringProperty receivingMessageModel = new SimpleStringProperty("");
@@ -75,11 +82,9 @@ public class ClientController {
         btnConnect.disableProperty().bind( connected );
         tfHost.disableProperty().bind( connected );
         tfPort.disableProperty().bind( connected );
-        tfSend.disableProperty().bind( connected.not() );
         btnDisconnect.disableProperty().bind( connected.not() );
-        btnSend.disableProperty().bind( connected.not() );
-
-        tfReceive.textProperty().bind(receivingMessageModel);
+        toServer.setMaxWidth(Double.MAX_VALUE);
+        toClient.setMaxWidth(Double.MAX_VALUE);
 
         initializeFilesTable();
     }
@@ -91,8 +96,10 @@ public class ClientController {
             protected Void call() throws Exception {
 
                 try {
-                    filesList.getItems().clear();
-                    Files.list(Paths.get("client_storage")).map(p -> p.getFileName().toString()).forEach(o -> filesList.getItems().add(o));
+                    filesClientsList.getItems().clear();
+                    filesServerList.getItems().clear();
+                    Files.list(Paths.get("client_storage")).map(p -> p.getFileName().toString()).forEach(o -> filesClientsList.getItems().add(o));
+                    Files.list(Paths.get("server_storage")).map(p -> p.getFileName().toString()).forEach(o -> filesServerList.getItems().add(o));
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -103,55 +110,6 @@ public class ClientController {
 
     }
 
-
-    @FXML
-    public void send() {
-        if( logger.isDebugEnabled() ) {
-            logger.debug("[SEND]");
-        }
-
-        if( !connected.get() ) {
-            if( logger.isWarnEnabled() ) {
-                logger.warn("client not connected; skipping write");
-            }
-            return;
-        }
-
-        final String toSend = tfSend.getText();
-
-        Task<Void> task = new Task<Void>() {
-
-            @Override
-            protected Void call() throws Exception {
-
-                ChannelFuture f = channel.writeAndFlush( Unpooled.copiedBuffer(toSend, CharsetUtil.UTF_8) );
-                f.sync();
-
-                return null;
-            }
-
-            @Override
-            protected void failed() {
-
-                Throwable exc = getException();
-                logger.error( "client send error", exc );
-                Alert alert = new Alert(Alert.AlertType.ERROR);
-                alert.setTitle("Client");
-                alert.setHeaderText( exc.getClass().getName() );
-                alert.setContentText( exc.getMessage() );
-                alert.showAndWait();
-
-                connected.set(false);
-            }
-
-        };
-
-        hboxStatus.visibleProperty().bind( task.runningProperty() );
-        lblStatus.textProperty().bind( task.messageProperty() );
-        piStatus.progressProperty().bind(task.progressProperty());
-
-        new Thread(task).start();
-    }
 
     @FXML
     public void connect() {
@@ -287,5 +245,37 @@ public class ClientController {
         piStatus.progressProperty().bind(task.progressProperty());
 
         new Thread(task).start();
+    }
+
+    public void sendToServer(ActionEvent actionEvent) throws IOException {
+//        Socket socket = new Socket("localhost", 8189);
+//        ObjectEncoderOutputStream out = new ObjectEncoderOutputStream(socket.getOutputStream());
+//        ObjectDecoderInputStream in = new ObjectDecoderInputStream(socket.getInputStream(), 100 * 1024 * 1024);
+//        out.writeObject(new FileRequest(filesServerList.getSelectionModel().getSelectedItem()));
+//        new Thread(() -> {
+//            try {
+//                while (true) {
+//                    Object input = in.readObject();
+//                    FileMessage fm = (FileMessage) input;
+//                    boolean append = true;
+//
+//                    FileOutputStream fos = new FileOutputStream(fm.getFilename(), append);
+//                    fos.write(fm.getData());
+//                    fos.close();
+//
+//                }
+//            } catch (ClassNotFoundException e) {
+//                e.printStackTrace();
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+//        }).start();
+//        in.close();
+//        out.close();
+       System.out.println("Client file : " + filesServerList.getSelectionModel().getSelectedItem());
+    }
+
+    public void sendToClient(ActionEvent actionEvent) {
+        System.out.println("Server file : " + filesClientsList.getSelectionModel().getSelectedItem());
     }
 }
