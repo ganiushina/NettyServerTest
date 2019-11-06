@@ -3,9 +3,9 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
 <?import javafx.scene.control.ProgressBar?>
 <?import javafx.scene.control.Separator?>
-<?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.HBox?>
@@ -46,12 +46,7 @@
       <Separator prefWidth="200.0" />
       <VBox prefHeight="86.0" prefWidth="228.0">
          <children>
-            <TableView fx:id="filesTable" prefHeight="127.0" prefWidth="228.0">
-              <!--<columns>-->
-                <!--<TableColumn prefWidth="75.0"  />-->
-                <!--<TableColumn prefWidth="75.0"  />-->
-              <!--</columns>-->
-            </TableView>
+            <ListView fx:id="filesList"  prefHeight="200.0" prefWidth="200.0" />
          </children>
       </VBox>
       <VBox VBox.vgrow="NEVER">

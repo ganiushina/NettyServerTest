@@ -60,7 +60,7 @@ public class ClientController {
     Label lblStatus;
 
     @FXML
-    TableView<FileMessage> filesTable;
+    ListView<String> filesList;
 
     private BooleanProperty connected = new SimpleBooleanProperty(false);
     private StringProperty receivingMessageModel = new SimpleStringProperty("");
@@ -86,42 +86,20 @@ public class ClientController {
 
     private void initializeFilesTable() {
 
+        Task<Void> task = new Task<Void>(){
+            @Override
+            protected Void call() throws Exception {
 
-
-        TableColumn<FileMessage, String> fileName = new TableColumn<>("fileName");
-        fileName.setCellValueFactory(new PropertyValueFactory<>("name"));
-//        try {
-//            while (true) {
-            //    AbstractMessage am = Network.readObject();
-               // if (am instanceof FileMessage) {
-                  //  FileMessage fm =  new FileMessage();
-                  //  Files.write(Paths.get("client_storage/" );
-                    //refreshLocalFilesList();
-
-        try {
-            Files.list(Paths.get("client_storage")).map(p -> p.getFileName().toString());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        // }
-//            }
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-
-
-//        try {
-//            FileMessage fm = (FileMessage) am;
-//            Files.write(Paths.get("client_storage/" + fm.getFilename()), fm.getData(), StandardOpenOption.CREATE);
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-
-        filesTable.getColumns().addAll(fileName);
-
-        filesTable.getItems().addAll();
-
-
+                try {
+                    filesList.getItems().clear();
+                    Files.list(Paths.get("client_storage")).map(p -> p.getFileName().toString()).forEach(o -> filesList.getItems().add(o));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                return null;
+            }
+        };
+        new Thread(task).start();
 
     }
 
